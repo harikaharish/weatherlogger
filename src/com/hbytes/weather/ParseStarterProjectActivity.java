@@ -10,13 +10,16 @@ import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.location.Criteria;
 import android.location.Location;
 import android.location.LocationManager;
 import android.os.Bundle;
+import android.provider.MediaStore;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.widget.EditText;
 import android.widget.Toast;
 
 import com.google.android.gms.maps.CameraUpdateFactory;
@@ -29,6 +32,7 @@ import com.google.android.gms.maps.model.MarkerOptions;
 import com.parse.FindCallback;
 import com.parse.Parse;
 import com.parse.ParseAnalytics;
+import com.parse.ParseAnonymousUtils;
 import com.parse.ParseException;
 import com.parse.ParseGeoPoint;
 import com.parse.ParseInstallation;
@@ -36,12 +40,15 @@ import com.parse.ParseObject;
 import com.parse.ParsePush;
 import com.parse.ParsePushBroadcastReceiver;
 import com.parse.ParseQuery;
+import com.parse.ParseRelation;
+import com.parse.ParseUser;
 import com.parse.PushService;
 
 public class ParseStarterProjectActivity extends Activity {
 	private GoogleMap googleMap;
 	private LocationManager locationManager;
 	private final String tag = "ParseStarterProjectActivity";
+	static final int REQUEST_IMAGE_CAPTURE = 1;
 
 	/** Called when the activity is first created. */
 	public void onCreate(Bundle savedInstanceState) {
@@ -69,7 +76,7 @@ public class ParseStarterProjectActivity extends Activity {
 			e.printStackTrace();
 		}
 
-		placingMarker();
+		checkInCustomLocation();
 		currentLocation();
 		retrieveDataFromParse();
 		// deleteMarker();
@@ -89,49 +96,6 @@ public class ParseStarterProjectActivity extends Activity {
 		}
 	}
 
-	public void placingMarker() {
-		googleMap.setOnMapLongClickListener(new OnMapLongClickListener() {
-
-			@Override
-			public void onMapLongClick(final LatLng point) {
-
-				AlertDialog.Builder alert = new AlertDialog.Builder(
-						ParseStarterProjectActivity.this);
-				alert.setTitle("Water Log Alert");
-
-				alert.setPositiveButton("Ok",
-						new DialogInterface.OnClickListener() {
-							public void onClick(DialogInterface dialog,
-									int whichButton) {
-
-								// Drawing marker on the map
-								googleMap.addMarker(new MarkerOptions()
-										.position(point)
-										.icon(BitmapDescriptorFactory
-												.defaultMarker(BitmapDescriptorFactory.HUE_AZURE))
-										.title(point.toString()));
-
-								saveDataToParse(point.latitude, point.longitude);
-
-								Toast.makeText(getBaseContext(),
-										"Marker is added to the Map",
-										Toast.LENGTH_SHORT).show();
-								pushNotifications();
-							}
-						});
-				alert.setNegativeButton("Cancel",
-						new DialogInterface.OnClickListener() {
-							public void onClick(DialogInterface dialog,
-									int whichButton) {
-								dialog.cancel();
-							}
-						});
-				alert.show();
-
-			}
-
-		});
-	}
 
 	@Override
 	protected void onResume() {
@@ -140,11 +104,12 @@ public class ParseStarterProjectActivity extends Activity {
 	}
 
 	public void currentLocation() {
+		//userAuthenticationCheck();
 		googleMap.setMyLocationEnabled(true);
 		Criteria criteria = new Criteria();
 		String provider = locationManager.getBestProvider(criteria, true);
 		Location myLocation = locationManager.getLastKnownLocation(provider);
-		googleMap.setMapType(GoogleMap.MAP_TYPE_HYBRID);
+		googleMap.setMapType(GoogleMap.MAP_TYPE_NORMAL);
 		try {
 			// Get latitude of the current location
 			double latitude = myLocation.getLatitude();
@@ -174,14 +139,6 @@ public class ParseStarterProjectActivity extends Activity {
 			Log.d("currentLocation", "Issue with location manager");
 		}
 
-	}
-
-	public void saveDataToParse(double lat, double lng) {
-		ParseGeoPoint point = new ParseGeoPoint(lat, lng);
-		ParseObject placeObject = new ParseObject("markers");
-		placeObject.put("loc", point);
-		placeObject.saveInBackground();
-		Log.d("ParseStarterProjectActivity", "dataSaved" + point);
 	}
 
 	public void retrieveDataFromParse() {
@@ -222,7 +179,7 @@ public class ParseStarterProjectActivity extends Activity {
 		});
 	}
 	
-	public void pushNotifications(){
+	public void pushNotification(){
 		Log.d("pushNotifications", "inside");
 		JSONObject object = new JSONObject();
 		try {
@@ -242,8 +199,6 @@ public class ParseStarterProjectActivity extends Activity {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		
-		
 	}
 	
 	private void buildAlertMessageNoGps() {
@@ -264,13 +219,58 @@ public class ParseStarterProjectActivity extends Activity {
 	    alert.show();
 	}
 	
-	public void checkinLocation(MenuItem item){
+	public void checkInCustomLocation() {
+		googleMap.setOnMapLongClickListener(new OnMapLongClickListener() {
+
+			@Override
+			public void onMapLongClick(final LatLng point) {
+				final ParseUser user = userAuthenticationCheck();
+				AlertDialog.Builder alert = new AlertDialog.Builder(
+						ParseStarterProjectActivity.this);
+				alert.setTitle("Water Log Alert");
+
+				alert.setPositiveButton("Ok",
+						new DialogInterface.OnClickListener() {
+							public void onClick(DialogInterface dialog,
+									int whichButton) {
+
+								// Drawing marker on the map
+								googleMap.addMarker(new MarkerOptions()
+										.position(point)
+										.icon(BitmapDescriptorFactory
+												.defaultMarker(BitmapDescriptorFactory.HUE_AZURE))
+										.title(point.toString()));
+								saveDataToParse(point.latitude, point.longitude, user);
+								Toast.makeText(getBaseContext(),
+										"Marker is added to the Map",
+										Toast.LENGTH_SHORT).show();
+								pushNotification();
+							}
+						});
+				alert.setNegativeButton("Cancel",
+						new DialogInterface.OnClickListener() {
+							public void onClick(DialogInterface dialog,
+									int whichButton) {
+								dialog.cancel();
+							}
+						});
+				alert.show();
+
+			}
+
+		});
+	}
+
+	public void checkinCurrentLocation(MenuItem item){
+		final ParseUser user = userAuthenticationCheck();
 		if ( !locationManager.isProviderEnabled( LocationManager.GPS_PROVIDER ) ) {
 	        buildAlertMessageNoGps();
 	    } else {
-			AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(this);
-			alertDialogBuilder.setTitle("Checkin");
+			AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(this, R.style.CustomDialog);
+			alertDialogBuilder.setTitle("Issue Checkin");
 			alertDialogBuilder.setMessage("Do You Want to Checkin your Location?" );
+			final EditText msg = new EditText(this);
+			alertDialogBuilder.setView(msg);
 			alertDialogBuilder.setPositiveButton("Ok",
 					new DialogInterface.OnClickListener() {
 						public void onClick(DialogInterface dialog,
@@ -303,10 +303,11 @@ public class ParseStarterProjectActivity extends Activity {
 									.icon(BitmapDescriptorFactory
 											.defaultMarker(BitmapDescriptorFactory.HUE_AZURE)));
 	
-							saveDataToParse(latitude, longitude);
+							//saveDataToParse(latitude, longitude);
+							saveDataToParse(latitude, longitude, user);
 							Toast.makeText(getBaseContext(), "Checkin is done", Toast.LENGTH_SHORT)
 									.show();
-							pushNotifications();
+							pushNotification();
 						}
 					});
 			alertDialogBuilder.setNegativeButton("Cancel",
@@ -320,6 +321,51 @@ public class ParseStarterProjectActivity extends Activity {
 	    }
 	}
 
+	public void saveDataToParse(double lat, double lng, ParseUser user) {
+		ParseGeoPoint point = new ParseGeoPoint(lat, lng);
+		ParseObject placeObject = new ParseObject("markers");
+		placeObject.put("loc", point);
+		placeObject.put("createdBy", user.getUsername());
+		placeObject.saveInBackground();
+		Log.d("ParseStarterProjectActivity", "dataSaved" + point);
+	}
+	
+	public ParseUser userAuthenticationCheck(){
+		ParseUser currentUser = null;
+		if (ParseAnonymousUtils.isLinked(ParseUser.getCurrentUser())) {
+            // If user is anonymous, send the user to LoginSignupActivity.class
+            Intent intent = new Intent(ParseStarterProjectActivity.this,
+                    LoginSignupActivity.class);
+            startActivity(intent);
+        } else {
+            // If current user is NOT anonymous user
+            // Get current user data from Parse.com
+            currentUser = ParseUser.getCurrentUser();
+            if (null == currentUser) {
+            	// Send user to LoginSignupActivity.class
+                Intent intent = new Intent(ParseStarterProjectActivity.this,
+                        LoginSignupActivity.class);
+                startActivity(intent);
+            }
+        }
+		return currentUser;
+	}
+
+    public void navigateToSettings(MenuItem item){
+    	Intent intent = new Intent(this,SettingsActivity.class);
+        startActivity(intent);   
+        finish();
+    }
+    
+	private void dispatchTakePictureIntent() {
+		if(getPackageManager().hasSystemFeature(PackageManager.FEATURE_CAMERA)){
+		    Intent takePictureIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+		    if (takePictureIntent.resolveActivity(getPackageManager()) != null) {
+		        startActivityForResult(takePictureIntent, REQUEST_IMAGE_CAPTURE);
+		    }
+		}
+	}
+	
 	@Override
 	public boolean onCreateOptionsMenu(Menu menu) {
 

@@ -1,0 +1,10 @@
+<resources>
+
+    <style name="AppTheme" parent="android:Theme.Holo.Light" />
+    
+    <style name="CustomDialog" parent="android:Theme.Dialog">
+	    <item name="android:windowIsTranslucent">true</item>
+	    <item name="android:windowBackground">@android:color/transparent</item>
+	</style>
+
+</resources>

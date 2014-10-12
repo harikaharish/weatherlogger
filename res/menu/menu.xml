@@ -2,12 +2,17 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android" >
     
     <item
-        android:id="@+id/settings"
-        android:icon="@drawable/settings"
-        android:showAsAction="always"
-        android:onClick="checkinLocation"
+        android:id="@+id/checkin"
+        android:icon="@drawable/checkin"
+        android:showAsAction="ifRoom"
+        android:onClick="checkinCurrentLocation"
         android:title="@string/action_settings"/>
     
-    
+    <item
+        android:id="@+id/settings"
+        android:icon="@drawable/settings"
+        android:showAsAction="ifRoom"
+        android:onClick="navigateToSettings"
+        android:title="@string/action_settings"/>
 
 </menu>
