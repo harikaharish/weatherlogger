@@ -1,6 +1,8 @@
 package com.hbytes.weather;
 
+import java.io.IOException;
 import java.util.List;
+import java.util.Locale;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -11,7 +13,9 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.location.Address;
 import android.location.Criteria;
+import android.location.Geocoder;
 import android.location.Location;
 import android.location.LocationManager;
 import android.os.Bundle;
@@ -48,7 +52,9 @@ public class ParseStarterProjectActivity extends Activity {
 	private GoogleMap googleMap;
 	private LocationManager locationManager;
 	private final String tag = "ParseStarterProjectActivity";
-	static final int REQUEST_IMAGE_CAPTURE = 1;
+	Geocoder geocoder;
+	List<Address> addresses;
+	Location loc;
 
 	/** Called when the activity is first created. */
 	public void onCreate(Bundle savedInstanceState) {
@@ -61,11 +67,11 @@ public class ParseStarterProjectActivity extends Activity {
 				ParseStarterProjectActivity.class);
 		ParseAnalytics.trackAppOpened(getIntent());
 		ParseInstallation.getCurrentInstallation().saveInBackground();
-		
+
 		ParseObject testObject = new ParseObject("TestObject");
 		testObject.put("foo", "bar");
 		testObject.saveInBackground();
-		locationManager = (LocationManager) getSystemService( Context.LOCATION_SERVICE );
+		locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
 
 		try {
 			// Loading map
@@ -96,7 +102,6 @@ public class ParseStarterProjectActivity extends Activity {
 		}
 	}
 
-
 	@Override
 	protected void onResume() {
 		super.onResume();
@@ -104,7 +109,7 @@ public class ParseStarterProjectActivity extends Activity {
 	}
 
 	public void currentLocation() {
-		//userAuthenticationCheck();
+		// userAuthenticationCheck();
 		googleMap.setMyLocationEnabled(true);
 		Criteria criteria = new Criteria();
 		String provider = locationManager.getBestProvider(criteria, true);
@@ -113,29 +118,31 @@ public class ParseStarterProjectActivity extends Activity {
 		try {
 			// Get latitude of the current location
 			double latitude = myLocation.getLatitude();
-	
+
 			// Get longitude of the current location
 			double longitude = myLocation.getLongitude();
-	
+
 			// Create a LatLng object for the current location
 			LatLng latLng = new LatLng(latitude, longitude);
-	
+
 			// Show the current location in Google Map
 			googleMap.moveCamera(CameraUpdateFactory.newLatLng(latLng));
-	
+
 			// Zoom in the Google Map
 			googleMap.animateCamera(CameraUpdateFactory.zoomTo(18));
-			
-			/*googleMap.addMarker(new MarkerOptions()
-					.position(new LatLng(latitude, longitude))
-					.title("You are here!")
-					.icon(BitmapDescriptorFactory
-							.defaultMarker(BitmapDescriptorFactory.HUE_AZURE)));*/
-	
-			//saveDataToParse(latitude, longitude);
-			//Toast.makeText(getBaseContext(), "Checkin is done", Toast.LENGTH_SHORT)
-					//.show();
-		} catch(Exception e){
+
+			/*
+			 * googleMap.addMarker(new MarkerOptions() .position(new
+			 * LatLng(latitude, longitude)) .title("You are here!")
+			 * .icon(BitmapDescriptorFactory
+			 * .defaultMarker(BitmapDescriptorFactory.HUE_AZURE)));
+			 */
+
+			// saveDataToParse(latitude, longitude);
+			// Toast.makeText(getBaseContext(), "Checkin is done",
+			// Toast.LENGTH_SHORT)
+			// .show();
+		} catch (Exception e) {
 			Log.d("currentLocation", "Issue with location manager");
 		}
 
@@ -163,11 +170,54 @@ public class ParseStarterProjectActivity extends Activity {
 						LatLng point = new LatLng(myobject.getParseGeoPoint(
 								"loc").getLatitude(), myobject
 								.getParseGeoPoint("loc").getLongitude());
+						StringBuilder str = null;
+						try {
+							geocoder = new Geocoder(
+									ParseStarterProjectActivity.this,
+									Locale.ENGLISH);
+							addresses = geocoder.getFromLocation(point.latitude, point.longitude, 1);
+							str = new StringBuilder();
+							if (geocoder.isPresent()) {
+								Toast.makeText(getApplicationContext(),
+										"geocoder present", Toast.LENGTH_SHORT)
+										.show();
+								Address returnAddress = addresses.get(0);
+
+								String localityString = returnAddress
+										.getLocality();
+								String city = returnAddress.getCountryName();
+								String region_code = returnAddress
+										.getCountryCode();
+								String zipcode = returnAddress.getPostalCode();
+
+								str.append(localityString + "");
+								str.append(city + "" + region_code + "");
+								str.append(zipcode + "");
+								Toast.makeText(getApplicationContext(), str,
+										Toast.LENGTH_SHORT).show();
+
+							} else {
+								Toast.makeText(getApplicationContext(),
+										"geocoder not present",
+										Toast.LENGTH_SHORT).show();
+							}
+
+							// } else {
+							// Toast.makeText(getApplicationContext(),
+							// "address not available",
+							// Toast.LENGTH_SHORT).show();
+							// }
+						} catch (IOException exception) {
+							// TODO Auto-generated catch block
+
+							Log.e("tag", exception.getMessage());
+						}
+
 						googleMap.addMarker(new MarkerOptions()
 								.position(point)
 								.icon(BitmapDescriptorFactory
 										.defaultMarker(BitmapDescriptorFactory.HUE_AZURE))
-								.title(point.toString()));
+								.title(str.toString()));
 
 					}
 
@@ -178,194 +228,70 @@ public class ParseStarterProjectActivity extends Activity {
 			}
 		});
 	}
-	
-	public void pushNotification(){
-		Log.d("pushNotifications", "inside");
-		JSONObject object = new JSONObject();
-		try {
-			object.put("alert","Water Logged Alert");
-			object.put("customdata", "My string");
-			object.put("action","Action");
-			ParsePush push = new ParsePush();
-			ParseQuery query = ParseInstallation.getQuery();
-			
-			push.setQuery(query);
-			push.setMessage("Water might be logged in this area. Avoid this area if possible");
-			push.setData(object);
-			push.sendInBackground();
-			Toast.makeText(getBaseContext(), "Push Notification is sent sucessfully", Toast.LENGTH_SHORT)
-			.show();
-		} catch (JSONException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-	}
-	
+
 	private void buildAlertMessageNoGps() {
-	    final AlertDialog.Builder builder = new AlertDialog.Builder(this);
-	    builder.setMessage("Your GPS seems to be disabled, do you want to enable it?")
-	           .setCancelable(false)
-	           .setPositiveButton("Yes", new DialogInterface.OnClickListener() {
-	               public void onClick(@SuppressWarnings("unused") final DialogInterface dialog, @SuppressWarnings("unused") final int id) {
-	                   startActivity(new Intent(android.provider.Settings.ACTION_LOCATION_SOURCE_SETTINGS));
-	               }
-	           })
-	           .setNegativeButton("No", new DialogInterface.OnClickListener() {
-	               public void onClick(final DialogInterface dialog, @SuppressWarnings("unused") final int id) {
-	                    dialog.cancel();
-	               }
-	           });
-	    final AlertDialog alert = builder.create();
-	    alert.show();
+		final AlertDialog.Builder builder = new AlertDialog.Builder(this);
+		builder.setMessage(
+				"Your GPS seems to be disabled, do you want to enable it?")
+				.setCancelable(false)
+				.setPositiveButton("Yes",
+						new DialogInterface.OnClickListener() {
+							public void onClick(
+									@SuppressWarnings("unused") final DialogInterface dialog,
+									@SuppressWarnings("unused") final int id) {
+								startActivity(new Intent(
+										android.provider.Settings.ACTION_LOCATION_SOURCE_SETTINGS));
+							}
+						})
+				.setNegativeButton("No", new DialogInterface.OnClickListener() {
+					public void onClick(final DialogInterface dialog,
+							@SuppressWarnings("unused") final int id) {
+						dialog.cancel();
+					}
+				});
+		final AlertDialog alert = builder.create();
+		alert.show();
 	}
-	
+
 	public void checkInCustomLocation() {
 		googleMap.setOnMapLongClickListener(new OnMapLongClickListener() {
 
 			@Override
-			public void onMapLongClick(final LatLng point) {
-				final ParseUser user = userAuthenticationCheck();
-				AlertDialog.Builder alert = new AlertDialog.Builder(
-						ParseStarterProjectActivity.this);
-				alert.setTitle("Water Log Alert");
-
-				alert.setPositiveButton("Ok",
-						new DialogInterface.OnClickListener() {
-							public void onClick(DialogInterface dialog,
-									int whichButton) {
-
-								// Drawing marker on the map
-								googleMap.addMarker(new MarkerOptions()
-										.position(point)
-										.icon(BitmapDescriptorFactory
-												.defaultMarker(BitmapDescriptorFactory.HUE_AZURE))
-										.title(point.toString()));
-								saveDataToParse(point.latitude, point.longitude, user);
-								Toast.makeText(getBaseContext(),
-										"Marker is added to the Map",
-										Toast.LENGTH_SHORT).show();
-								pushNotification();
-							}
-						});
-				alert.setNegativeButton("Cancel",
-						new DialogInterface.OnClickListener() {
-							public void onClick(DialogInterface dialog,
-									int whichButton) {
-								dialog.cancel();
-							}
-						});
-				alert.show();
-
+			public void onMapLongClick(final LatLng location) {
+				navigateToPostIssue(location.latitude, location.longitude);
 			}
 
 		});
 	}
 
-	public void checkinCurrentLocation(MenuItem item){
-		final ParseUser user = userAuthenticationCheck();
-		if ( !locationManager.isProviderEnabled( LocationManager.GPS_PROVIDER ) ) {
-	        buildAlertMessageNoGps();
-	    } else {
-			AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(this, R.style.CustomDialog);
-			alertDialogBuilder.setTitle("Issue Checkin");
-			alertDialogBuilder.setMessage("Do You Want to Checkin your Location?" );
-			final EditText msg = new EditText(this);
-			alertDialogBuilder.setView(msg);
-			alertDialogBuilder.setPositiveButton("Ok",
-					new DialogInterface.OnClickListener() {
-						public void onClick(DialogInterface dialog,
-								int whichButton) {
-	
-							googleMap.setMyLocationEnabled(true);
-							LocationManager locationManager = (LocationManager) getSystemService(LOCATION_SERVICE);
-							Criteria criteria = new Criteria();
-							String provider = locationManager.getBestProvider(criteria, true);
-							Location myLocation = locationManager.getLastKnownLocation(provider);
-							googleMap.setMapType(GoogleMap.MAP_TYPE_HYBRID);
-	
-							// Get latitude of the current location
-							double latitude = myLocation.getLatitude();
-	
-							// Get longitude of the current location
-							double longitude = myLocation.getLongitude();
-	
-							// Create a LatLng object for the current location
-							LatLng latLng = new LatLng(latitude, longitude);
-	
-							// Show the current location in Google Map
-							googleMap.moveCamera(CameraUpdateFactory.newLatLng(latLng));
-	
-							// Zoom in the Google Map
-							googleMap.animateCamera(CameraUpdateFactory.zoomTo(18));
-							googleMap.addMarker(new MarkerOptions()
-									.position(new LatLng(latitude, longitude))
-									.title("You are here!")
-									.icon(BitmapDescriptorFactory
-											.defaultMarker(BitmapDescriptorFactory.HUE_AZURE)));
-	
-							//saveDataToParse(latitude, longitude);
-							saveDataToParse(latitude, longitude, user);
-							Toast.makeText(getBaseContext(), "Checkin is done", Toast.LENGTH_SHORT)
-									.show();
-							pushNotification();
-						}
-					});
-			alertDialogBuilder.setNegativeButton("Cancel",
-					new DialogInterface.OnClickListener() {
-						public void onClick(DialogInterface dialog,
-								int whichButton) {
-							dialog.cancel();
-						}
-					});
-			alertDialogBuilder.show();
-	    }
-	}
-
-	public void saveDataToParse(double lat, double lng, ParseUser user) {
-		ParseGeoPoint point = new ParseGeoPoint(lat, lng);
-		ParseObject placeObject = new ParseObject("markers");
-		placeObject.put("loc", point);
-		placeObject.put("createdBy", user.getUsername());
-		placeObject.saveInBackground();
-		Log.d("ParseStarterProjectActivity", "dataSaved" + point);
-	}
-	
-	public ParseUser userAuthenticationCheck(){
-		ParseUser currentUser = null;
-		if (ParseAnonymousUtils.isLinked(ParseUser.getCurrentUser())) {
-            // If user is anonymous, send the user to LoginSignupActivity.class
-            Intent intent = new Intent(ParseStarterProjectActivity.this,
-                    LoginSignupActivity.class);
-            startActivity(intent);
-        } else {
-            // If current user is NOT anonymous user
-            // Get current user data from Parse.com
-            currentUser = ParseUser.getCurrentUser();
-            if (null == currentUser) {
-            	// Send user to LoginSignupActivity.class
-                Intent intent = new Intent(ParseStarterProjectActivity.this,
-                        LoginSignupActivity.class);
-                startActivity(intent);
-            }
-        }
-		return currentUser;
-	}
-
-    public void navigateToSettings(MenuItem item){
-    	Intent intent = new Intent(this,SettingsActivity.class);
-        startActivity(intent);   
-        finish();
-    }
-    
-	private void dispatchTakePictureIntent() {
-		if(getPackageManager().hasSystemFeature(PackageManager.FEATURE_CAMERA)){
-		    Intent takePictureIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
-		    if (takePictureIntent.resolveActivity(getPackageManager()) != null) {
-		        startActivityForResult(takePictureIntent, REQUEST_IMAGE_CAPTURE);
-		    }
+	public void checkinCurrentLocation(MenuItem item) {
+		if (!locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
+			buildAlertMessageNoGps();
+		} else {
+			LocationManager locationManager = (LocationManager) getSystemService(LOCATION_SERVICE);
+			Criteria criteria = new Criteria();
+			String provider = locationManager.getBestProvider(criteria, true);
+			Location location = locationManager.getLastKnownLocation(provider);
+			// Get latitude of the current location
+			navigateToPostIssue(location.getLatitude(), location.getLongitude());
 		}
 	}
-	
+
+	public void navigateToSettings(MenuItem item) {
+		Intent intent = new Intent(this, SettingsActivity.class);
+		startActivity(intent);
+		finish();
+	}
+
+	public void navigateToPostIssue(double latitude, double longitude) {
+		Intent intent = new Intent(this, PostIssueActivity.class);
+		Bundle b = new Bundle();
+		b.putDouble("latitude", latitude);
+		b.putDouble("longitude", longitude);
+		intent.putExtras(b); // Put your id to your next Intent
+		startActivity(intent);
+	}
+
 	@Override
 	public boolean onCreateOptionsMenu(Menu menu) {
 

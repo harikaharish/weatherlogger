@@ -93,10 +93,6 @@ public class LoginSignupActivity extends Activity {
                                 Toast.makeText(getApplicationContext(),
                                         "Successfully Signed up, please log in.",
                                         Toast.LENGTH_LONG).show();
-                                Intent intent = new Intent(
-                                        LoginSignupActivity.this,
-                                        ParseStarterProjectActivity.class);
-                                startActivity(intent);
                                 finish();
                             } else {
                                 Toast.makeText(getApplicationContext(),

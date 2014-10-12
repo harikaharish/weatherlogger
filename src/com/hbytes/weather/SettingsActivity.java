@@ -30,7 +30,7 @@ public class SettingsActivity extends Activity {
 		Toast.makeText(getApplicationContext(), "You are now logged out",
 				Toast.LENGTH_SHORT).show();
 		Intent intent = new Intent(SettingsActivity.this,
-				LoginSignupActivity.class);
+				ParseStarterProjectActivity.class);
 		startActivity(intent);
 		finish();
 	}

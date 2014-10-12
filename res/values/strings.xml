@@ -11,4 +11,6 @@
     <string name="Welcome">Welcome!</string>
     <string name="Logout">Logout</string>
     <string name="Login">Login</string>
+    <string name="OK">OK</string>
+    <string name="Cancel">Cancel</string>
 </resources>
