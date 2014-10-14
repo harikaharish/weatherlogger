@@ -4,20 +4,39 @@
     android:layout_height="match_parent"
     android:orientation="vertical" >
     
-    <Button
-        android:id="@+id/logout"
+    <TextView 
+        android:id="@+id/username"
         android:layout_width="fill_parent"
-        android:layout_height="wrap_content"
-        android:layout_below="@+id/password"
-        android:onClick="userLogout"
-        android:text="@string/Logout" />
+        android:layout_height="wrap_content" 
+        android:text="@string/userName" 
+        android:textAppearance="?android:attr/textAppearanceLarge"/>
+    
+    <TextView 
+        android:id="@+id/posts"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content" 
+        android:text="@string/noOfPosts" 
+        android:textAppearance="?android:attr/textAppearanceMedium"/>
+    
+    <TextView 
+        android:id="@+id/postscount"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content" 
+        android:text="@string/defaultCount" 
+        android:textAppearance="?android:attr/textAppearanceMedium"/>
     
     <Button
         android:id="@+id/login"
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
-        android:layout_below="@+id/password"
         android:onClick="userLogin"
         android:text="@string/Login" />
+    
+    <Button
+        android:id="@+id/logout"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:onClick="userLogout"
+        android:text="@string/Logout" />
 
 </LinearLayout>

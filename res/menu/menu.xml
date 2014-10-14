@@ -6,7 +6,7 @@
         android:icon="@drawable/checkin"
         android:showAsAction="ifRoom"
         android:onClick="checkinCurrentLocation"
-        android:title="@string/action_settings"/>
+        android:title="@string/checkin"/>
     
     <item
         android:id="@+id/settings"
@@ -14,5 +14,12 @@
         android:showAsAction="ifRoom"
         android:onClick="navigateToSettings"
         android:title="@string/action_settings"/>
+        
+    <item
+        android:id="@+id/voiceCheckin"
+        android:icon="@drawable/talk"
+        android:showAsAction="always"
+        android:onClick="voiceCheckInCurrentLocation"
+        android:title="@string/voice_checkin"/>
 
 </menu>

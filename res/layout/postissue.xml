@@ -6,6 +6,21 @@
     android:orientation="vertical" 
     android:padding="5dip" >
 
+    <TextView
+        android:id="@+id/textView1"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:text="Post An Issue"
+        android:textAppearance="?android:attr/textAppearanceLarge" />
+
+    <TextView
+        android:id="@+id/textView2"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:text="You can also click on camera to attach an image" />
+
     <ImageView
         android:id="@+id/issueImageView"
         android:layout_width="wrap_content"
@@ -17,7 +32,7 @@
 
     <EditText
         android:id="@+id/msg"
-        android:layout_width="wrap_content"
+        android:layout_width="fill_parent"
         android:layout_height="wrap_content"
         android:layout_gravity="center" >
 

@@ -13,4 +13,9 @@
     <string name="Login">Login</string>
     <string name="OK">OK</string>
     <string name="Cancel">Cancel</string>
+    <string name="userName">UserName</string>
+    <string name="noOfPosts">Number of Posts:</string>
+    <string name="defaultCount">0</string>
+    <string name="checkin">CheckIn</string>
+    <string name="voice_checkin">Voice CheckIn</string>
 </resources>

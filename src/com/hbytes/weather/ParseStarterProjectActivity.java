@@ -1,60 +1,60 @@
 package com.hbytes.weather;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
-
-import org.json.JSONException;
-import org.json.JSONObject;
 
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
-import android.content.pm.PackageManager;
+import android.graphics.BitmapFactory;
 import android.location.Address;
 import android.location.Criteria;
 import android.location.Geocoder;
 import android.location.Location;
 import android.location.LocationManager;
 import android.os.Bundle;
-import android.provider.MediaStore;
+import android.speech.RecognizerIntent;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.widget.EditText;
+import android.view.View;
+import android.widget.ImageView;
+import android.widget.TextView;
 import android.widget.Toast;
-
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
+import com.google.android.gms.maps.GoogleMap.OnInfoWindowClickListener;
 import com.google.android.gms.maps.GoogleMap.OnMapLongClickListener;
+import com.google.android.gms.maps.GoogleMap.OnMarkerClickListener;
 import com.google.android.gms.maps.MapFragment;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
+import com.hbytes.adapters.CustomInfoWindowAdapter;
 import com.parse.FindCallback;
+import com.parse.GetCallback;
+import com.parse.GetDataCallback;
 import com.parse.Parse;
 import com.parse.ParseAnalytics;
-import com.parse.ParseAnonymousUtils;
 import com.parse.ParseException;
-import com.parse.ParseGeoPoint;
+import com.parse.ParseFile;
 import com.parse.ParseInstallation;
 import com.parse.ParseObject;
-import com.parse.ParsePush;
-import com.parse.ParsePushBroadcastReceiver;
 import com.parse.ParseQuery;
-import com.parse.ParseRelation;
-import com.parse.ParseUser;
 import com.parse.PushService;
 
-public class ParseStarterProjectActivity extends Activity {
+public class ParseStarterProjectActivity extends Activity implements OnInfoWindowClickListener {
 	private GoogleMap googleMap;
 	private LocationManager locationManager;
 	private final String tag = "ParseStarterProjectActivity";
-	Geocoder geocoder;
-	List<Address> addresses;
 	Location loc;
+	protected static final int REQUEST_OK = 1;
+	private String voiceMessage;
 
 	/** Called when the activity is first created. */
 	public void onCreate(Bundle savedInstanceState) {
@@ -99,6 +99,8 @@ public class ParseStarterProjectActivity extends Activity {
 						"Sorry! Unable to render maps", Toast.LENGTH_SHORT)
 						.show();
 			}
+			googleMap.setInfoWindowAdapter(new CustomInfoWindowAdapter(getLayoutInflater()));
+			googleMap.setOnInfoWindowClickListener(this);
 		}
 	}
 
@@ -130,18 +132,6 @@ public class ParseStarterProjectActivity extends Activity {
 
 			// Zoom in the Google Map
 			googleMap.animateCamera(CameraUpdateFactory.zoomTo(18));
-
-			/*
-			 * googleMap.addMarker(new MarkerOptions() .position(new
-			 * LatLng(latitude, longitude)) .title("You are here!")
-			 * .icon(BitmapDescriptorFactory
-			 * .defaultMarker(BitmapDescriptorFactory.HUE_AZURE)));
-			 */
-
-			// saveDataToParse(latitude, longitude);
-			// Toast.makeText(getBaseContext(), "Checkin is done",
-			// Toast.LENGTH_SHORT)
-			// .show();
 		} catch (Exception e) {
 			Log.d("currentLocation", "Issue with location manager");
 		}
@@ -149,76 +139,35 @@ public class ParseStarterProjectActivity extends Activity {
 	}
 
 	public void retrieveDataFromParse() {
-
 		ParseQuery<ParseObject> query = ParseQuery.getQuery("markers");
 
 		query.findInBackground(new FindCallback<ParseObject>() {
+			private View v;
+
 			@Override
 			public void done(List<ParseObject> list, ParseException e) {
 				// TODO Auto-generated method stub
 
 				if (e == null) {
 
-					for (ParseObject myobject : list) {
+					for (ParseObject obj : list) {
 
 						Log.d("latitude from parse", ""
-								+ myobject.getParseGeoPoint("loc")
+								+ obj.getParseGeoPoint("loc")
 										.getLatitude());
 						Log.d("longitude from parse", ""
-								+ myobject.getParseGeoPoint("loc")
+								+ obj.getParseGeoPoint("loc")
 										.getLongitude());
-						LatLng point = new LatLng(myobject.getParseGeoPoint(
-								"loc").getLatitude(), myobject
+						LatLng point = new LatLng(obj.getParseGeoPoint(
+								"loc").getLatitude(), obj
 								.getParseGeoPoint("loc").getLongitude());
-						StringBuilder str = null;
-						try {
-							geocoder = new Geocoder(
-									ParseStarterProjectActivity.this,
-									Locale.ENGLISH);
-							addresses = geocoder.getFromLocation(point.latitude, point.longitude, 1);
-							str = new StringBuilder();
-							if (geocoder.isPresent()) {
-								Toast.makeText(getApplicationContext(),
-										"geocoder present", Toast.LENGTH_SHORT)
-										.show();
-								Address returnAddress = addresses.get(0);
-
-								String localityString = returnAddress
-										.getLocality();
-								String city = returnAddress.getCountryName();
-								String region_code = returnAddress
-										.getCountryCode();
-								String zipcode = returnAddress.getPostalCode();
-
-								str.append(localityString + "");
-								str.append(city + "" + region_code + "");
-								str.append(zipcode + "");
-								Toast.makeText(getApplicationContext(), str,
-										Toast.LENGTH_SHORT).show();
-
-							} else {
-								Toast.makeText(getApplicationContext(),
-										"geocoder not present",
-										Toast.LENGTH_SHORT).show();
-							}
-
-							// } else {
-							// Toast.makeText(getApplicationContext(),
-							// "address not available",
-							// Toast.LENGTH_SHORT).show();
-							// }
-						} catch (IOException exception) {
-							// TODO Auto-generated catch block
-
-							Log.e("tag", exception.getMessage());
-						}
 
 						googleMap.addMarker(new MarkerOptions()
 								.position(point)
 								.icon(BitmapDescriptorFactory
-										.defaultMarker(BitmapDescriptorFactory.HUE_AZURE))
-								.title(str.toString()));
-
+										.defaultMarker(BitmapDescriptorFactory.HUE_AZURE))	
+								.title(obj.getObjectId()));
+						
 					}
 
 				} else {
@@ -280,7 +229,7 @@ public class ParseStarterProjectActivity extends Activity {
 	public void navigateToSettings(MenuItem item) {
 		Intent intent = new Intent(this, SettingsActivity.class);
 		startActivity(intent);
-		finish();
+		//finish();
 	}
 
 	public void navigateToPostIssue(double latitude, double longitude) {
@@ -288,8 +237,11 @@ public class ParseStarterProjectActivity extends Activity {
 		Bundle b = new Bundle();
 		b.putDouble("latitude", latitude);
 		b.putDouble("longitude", longitude);
+		if(null != voiceMessage)
+			b.putString("voiceMessage", voiceMessage);
 		intent.putExtras(b); // Put your id to your next Intent
 		startActivity(intent);
+		voiceMessage = null;
 	}
 
 	@Override
@@ -311,5 +263,63 @@ public class ParseStarterProjectActivity extends Activity {
 		}
 		return super.onOptionsItemSelected(item);
 	}
+
+	@Override
+	public void onInfoWindowClick(Marker arg0) {
+		// TODO Auto-generated method stub
+		Intent intent = new Intent(this, PostDetailsActivity.class);
+		Bundle b = new Bundle();
+		Log.d(tag, "marker object id is: "+arg0.getTitle());
+		b.putString("objectId", arg0.getTitle());
+		intent.putExtras(b); // Put your id to your next Intent
+		startActivity(intent);		
+		
+	}
+
+	/*@Override
+	public boolean onMarkerClick(final Marker marker) {
+		// TODO Auto-generated method stub
+		googleMap.moveCamera(CameraUpdateFactory.newLatLng(marker.getPosition()));
+		// Zoom in the Google Map
+		googleMap.animateCamera(CameraUpdateFactory.zoomTo(18));
+		marker.showInfoWindow();
+		return true;
+	}*/
+
+	public void voiceCheckInCurrentLocation(MenuItem menu) {
+		 Intent i = new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH);
+         i.putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, "en-US");
+         try {
+             startActivityForResult(i, REQUEST_OK);
+         } catch (Exception e) {
+        	 Toast.makeText(this, "Error initializing speech to text engine.", Toast.LENGTH_LONG).show();
+         }
+	}
+	
+	@Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (requestCode==REQUEST_OK  && resultCode==RESULT_OK) {
+        	ArrayList<String> thingsYouSaid = data.getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS);
+        	Log.d(tag, "Received Voice Command: "+thingsYouSaid);
+        	StringBuilder voice = new StringBuilder();
+        	boolean commandFound = false;
+        	/*for(String command: thingsYouSaid){
+        		if(command.contains("log")){
+        			voiceMessage = command;
+        			commandFound = true;
+        			checkinCurrentLocation(null);
+        			break;
+        		}
+        	}*/
+        	
+			voiceMessage = thingsYouSaid.get(0);
+			commandFound = true;
+			checkinCurrentLocation(null);
+        	//((TextView)findViewById(R.id.voiceCommandFeedBack)).setText(thingsYouSaid.get(0));
+        }
+    }
+	
+	
 
 }
