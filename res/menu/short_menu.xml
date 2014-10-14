@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android" >
+    
+    <item
+        android:id="@+id/voiceCheckin"
+        android:icon="@drawable/talk"
+        android:showAsAction="ifRoom"
+        android:onClick="voiceCheckInCurrentLocation"
+        android:title="@string/voice_checkin"/>
+
+</menu>

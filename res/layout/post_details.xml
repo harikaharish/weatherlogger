@@ -1,0 +1,153 @@
+<?xml version="1.0" encoding="utf-8"?><RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:layout_weight="1"
+    android:orientation="vertical" 
+    android:padding="5dip" >
+
+    <ImageView
+        android:id="@+id/issueImageViewDetail"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:clickable="true"
+        android:layout_alignParentLeft="true" 
+        android:layout_alignParentRight="true" />
+
+    <TextView
+        android:id="@+id/addressDetail"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:layout_below="@id/issueImageViewDetail"
+        android:text="TextView"
+	    android:textAppearance="?android:attr/textAppearanceLarge"/>
+    
+   <TextView
+        android:id="@+id/postedUser"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:layout_below="@id/addressDetail"
+        android:text="User"
+        android:textAppearance="?android:attr/textAppearanceMedium" />
+
+    <TextView
+        android:id="@+id/postedDateDetail"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentLeft="true"
+        android:layout_below="@id/postedUser"
+        android:text="date" />
+
+    <TextView
+        android:id="@+id/messageDetail"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentLeft="true"
+        android:layout_below="@id/postedDateDetail"
+        android:text="No message left by user" 
+        android:textAppearance="?android:attr/textAppearanceLarge"/>
+   
+	<LinearLayout 
+	    	android:id="@+id/commentsSection"
+	    	android:layout_width="fill_parent"
+	        android:layout_height="wrap_content"
+	        android:orientation="vertical"
+        	android:layout_below="@id/messageDetail">
+        	
+	    <TextView 
+	        android:id="@+id/comments"
+	        android:layout_width="wrap_content"
+	        android:layout_height="wrap_content"
+	        android:layout_gravity="center"
+	        android:text="Feedback"/>
+	    	
+	</LinearLayout>
+	
+	<LinearLayout
+	    android:id="@+id/likeDislike"
+    	android:layout_width="wrap_content"
+    	android:layout_height="wrap_content"
+    	android:layout_gravity="center"
+        android:layout_alignParentLeft="true" 
+        android:layout_alignParentRight="true"
+    	android:layout_below="@id/commentsSection"
+    	android:orientation="horizontal"
+        android:layout_margin="10px">  
+          
+	    <ImageView
+	        android:id="@+id/likeDetail"
+	        android:layout_width="wrap_content"
+	        android:layout_height="wrap_content"
+	        android:src="@android:drawable/star_on"
+	        android:gravity="left" 
+            android:layout_weight="1"/>
+
+	    <TextView
+	        android:id="@+id/likesCountDetail"
+	        android:layout_width="wrap_content"
+	        android:layout_height="wrap_content"
+	        android:layout_weight="1"/>
+
+	    <TextView
+	        android:id="@+id/dislikesCountDetail"
+	        android:layout_width="wrap_content"
+	        android:layout_height="wrap_content"
+	        android:layout_weight="1"
+	        android:gravity="right"/>
+	    
+	    <ImageView
+	        android:id="@+id/dislikeDetail"
+	        android:layout_width="wrap_content"
+	        android:layout_height="wrap_content"
+	        android:gravity="right"
+            android:layout_weight="1"
+	        android:layout_marginLeft="100px"
+        	android:src="@android:drawable/star_off" />
+	    
+	</LinearLayout>
+    
+    <EditText
+        android:id="@+id/comment"
+        android:layout_height="wrap_content"
+        android:layout_width="wrap_content"
+        android:layout_alignParentLeft="true" 
+        android:layout_alignParentRight="true"
+        android:layout_below="@id/likeDislike">
+
+        <requestFocus
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content" />
+
+    </EditText>
+    
+    <RelativeLayout
+    	android:layout_width="wrap_content"
+    	android:layout_height="wrap_content"
+    	android:layout_gravity="center"
+        android:layout_alignParentLeft="true" 
+        android:layout_alignParentRight="true"
+    	android:layout_below="@id/comment">
+	 
+	    <Button
+	        android:id="@+id/cancel"
+	        android:layout_width="wrap_content"
+	        android:layout_height="wrap_content"
+	        android:onClick="cancelbutton"
+	        android:layout_gravity="left"
+	        android:text="@string/Cancel"/>
+	    
+	    <Button
+	        android:id="@+id/ok"
+	        android:layout_width="wrap_content"
+	        android:layout_height="wrap_content"
+	        android:onClick="oKbutton"
+	        android:text="@string/OK"
+        	android:layout_alignParentRight="true" 
+	        android:layout_toRightOf="@id/cancel" />
+
+	</RelativeLayout>
+
+	
+</RelativeLayout>
